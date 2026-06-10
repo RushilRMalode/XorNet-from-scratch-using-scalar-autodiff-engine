@@ -11,7 +11,7 @@ class neuron:
         elif operation == 'sigmoid':
             self.activation = Value.sigmoid
         else:
-            return ValueError('Activation not implemented')
+            raise ValueError('Activation not implemented')
         
         self.bias = Value(random.uniform(-1,1))
     
@@ -23,7 +23,7 @@ class neuron:
     def parameters(self):
         return self.weights + [self.bias]
     
-class Layer:
+class layer:
     def __init__(self,width,n_inputs,operation='ReLU'):
         self.neurons = [neuron(n_inputs,operation) for _ in range(width)]
     def __call__(self,x):
@@ -31,4 +31,29 @@ class Layer:
         out = [n(x) for n in self.neurons]
         return out
     def parameters(self):
-        return [n.parameters() for n in self.neurons]
+        params = []
+        for n in self.neurons:
+            params.extend(n.parameters())
+        return params
+    
+class MLP:
+    def __init__(self,n_layers:int,n_inputs:int,n_outputs:int,arch:list,activations:list):
+        self.layers = []
+        arch+=[n_outputs]
+        assert len(arch) == n_layers
+        assert len(activations) == n_layers
+        temp = n_inputs
+        for num in range(n_layers):
+            self.layers.append(layer(arch[num],temp,activations[num]))
+            temp=arch[num]
+    def __call__(self,x):
+        x = [xi if isinstance(xi,Value) else Value(xi) for xi in x]
+        out = x
+        for _layer in self.layers:
+            out = _layer(out)
+        return out    
+    def parameters(self):
+        params = []
+        for _layer in self.layers:
+            params.extend(_layer.parameters())
+        return params
